@@ -42,7 +42,7 @@ def Debugger(*args, **kwargs):
 
 class BlackMagic(object):
     def __init__(self, port):
-        self.__dict__['port'] = serial.Serial(port, 115200, timeout=1)
+        self.__dict__['port'] = serial.Serial(port, 4000000, timeout=1)
 
     def setup(self, rsp):
         rsp.command(b'swdp_scan')
@@ -183,7 +183,7 @@ class RSP(object):
             retries -= 1
             res = self.port.read()
         if len(discards) > 0 and self.verbose:
-            print('read_ack discards %s' % discards)
+            print('read_ack discards %s' % ''.join(discards))
         if retries == 0:
             raise ValueError("retry fail")
 
@@ -205,7 +205,7 @@ class RSP(object):
             c=self.port.read()
             if timeout>0 and start+timeout < time.time():
                 return
-        if len(discards)>0 and self.verbose: print('discards %s' % discards)
+        if len(discards)>0 and self.verbose: print('discards %s' % ''.join(discards))
         res=c
 
         while True:
@@ -690,7 +690,7 @@ class CortexM3(RSP):
 
     def getreg(self,size,ptr):
         tmp = self.fetch(b'm%x,%x' % (ptr, size))
-        return unhex(switch_endian(tmp))
+        return unhex(switch_endian(rsp_decode(tmp)))
 
     def printreg(self, reg):
         return [n if type(v)==bool and v==True else (n,v if n!='ADDR' else hex(v<<5)) for n,v in reg.items() if v]
